@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>For You ❤️</title>
+
+<style>
+body {
+  margin:0;
+  overflow:hidden;
+  background:black;
+  font-family:sans-serif;
+}
+
+/* TAP */
+.tap {
+  position:fixed;
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-size:24px;
+  z-index:99;
+}
+
+/* TEXT */
+.text {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:80px;
+  color:#ff4d88;
+  text-align:center;
+}
+
+/* HEART RAIN */
+.heart {
+  position:absolute;
+  font-size:20px;
+  animation:fall linear forwards;
+}
+@keyframes fall {
+  to { transform:translateY(110vh); opacity:0;}
+}
+
+/* GALAXY */
+.stars {
+  position:fixed;
+  width:100%;
+  height:100%;
+  display:none;
+}
+
+.star {
+  position:absolute;
+  background:white;
+  border-radius:50%;
+  animation:twinkle 2s infinite;
+}
+@keyframes twinkle {
+  50% {opacity:0.2;}
+}
+
+/* SLIDER */
+.slider {
+  position:absolute;
+  width:100%;
+  height:100%;
+  display:none;
+  perspective:1200px;
+}
+
+.slide {
+  position:absolute;
+  width:70%;
+  left:15%;
+  top:20%;
+  transform-style:preserve-3d;
+  transition:0.8s;
+}
+
+.slide img {
+  width:100%;
+  border-radius:20px;
+  backface-visibility:hidden;
+}
+
+.back {
+  position:absolute;
+  top:0;
+  transform:rotateY(180deg);
+}
+
+.caption {
+  color:pink;
+  text-align:center;
+}
+
+/* CANVAS FIREWORK */
+canvas {
+  position:fixed;
+  top:0;
+  left:0;
+  pointer-events:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="tap" id="tap">Tap dulu ❤️</div>
+
+<audio id="music" loop>
+<source src="https://files.catbox.moe/nym68k.mp3">
+</audio>
+
+<div class="text" id="text"></div>
+<div class="stars" id="stars"></div>
+
+<canvas id="fire"></canvas>
+
+<div class="slider" id="slider">
+  <div class="slide" id="slide">
+    <div class="caption">for you ❤️</div>
+    <img src="https://source.unsplash.com/400x300/?love">
+    <img class="back" src="https://source.unsplash.com/400x300/?couple">
+  </div>
+</div>
+
+<script>
+
+// MUSIC START
+tap.onclick=()=>{
+  tap.style.display="none";
+  let m=music;
+  m.volume=0;
+  m.play();
+
+  let v=0;
+  let fade=setInterval(()=>{
+    v+=0.05;
+    m.volume=v;
+    if(v>=1) clearInterval(fade);
+  },200);
+
+  start();
+};
+
+// HEART RAIN
+function rain(){
+  setInterval(()=>{
+    let h=document.createElement("div");
+    let icons=["💗","💖","💕","💘"];
+    h.innerText=icons[Math.random()*icons.length|0];
+    h.className="heart";
+    h.style.left=Math.random()*100+"%";
+    h.style.animationDuration=2+Math.random()*3+"s";
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(),5000);
+  },120);
+}
+
+// COUNTDOWN
+function start(){
+  rain();
+
+  let c=3;
+  let t=text;
+
+  let timer=setInterval(()=>{
+    t.innerText=c;
+    c--;
+    if(c<0){
+      clearInterval(timer);
+      show("Happy",()=>show("Birthday",launch));
+    }
+  },1000);
+}
+
+// TEXT
+function show(word,next){
+  text.innerText=word;
+  setTimeout(()=>{
+    text.innerText="";
+    next();
+  },1500);
+}
+
+// FIREWORK
+let canvas=document.getElementById("fire");
+let ctx=canvas.getContext("2d");
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+
+let particles=[];
+
+function launch(){
+  stars.style.display="block";
+
+  // generate stars
+  for(let i=0;i<100;i++){
+    let s=document.createElement("div");
+    s.className="star";
+    let size=Math.random()*3+1;
+    s.style.width=size+"px";
+    s.style.height=size+"px";
+    s.style.top=Math.random()*100+"%";
+    s.style.left=Math.random()*100+"%";
+    stars.appendChild(s);
+  }
+
+  // fireworks loop
+  setInterval(()=>{
+    let x=Math.random()*canvas.width;
+    let y=Math.random()*canvas.height/2;
+
+    for(let i=0;i<50;i++){
+      particles.push({
+        x:x,
+        y:y,
+        dx:(Math.random()-0.5)*5,
+        dy:(Math.random()-0.5)*5,
+        life:50
+      });
+    }
+  },800);
+
+  animate();
+
+  slider.style.display="block";
+}
+
+// FIREWORK DRAW
+function animate(){
+  ctx.fillStyle="rgba(0,0,0,0.2)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  particles.forEach((p,i)=>{
+    ctx.fillStyle="pink";
+    ctx.fillRect(p.x,p.y,2,2);
+
+    p.x+=p.dx;
+    p.y+=p.dy;
+    p.life--;
+
+    if(p.life<=0) particles.splice(i,1);
+  });
+
+  requestAnimationFrame(animate);
+}
+
+// SWIPE FLIP
+let startX=0;
+
+document.addEventListener("touchstart",e=>{
+  startX=e.touches[0].clientX;
+});
+
+document.addEventListener("touchend",e=>{
+  let endX=e.changedTouches[0].clientX;
+
+  if(startX-endX>50){
+    slide.style.transform="rotateY(180deg)";
+  } else if(endX-startX>50){
+    slide.style.transform="rotateY(0deg)";
+  }
+});
+
+// PARALLAX (HP GERAK)
+window.addEventListener("deviceorientation",e=>{
+  let x=e.gamma/10;
+  let y=e.beta/10;
+  stars.style.transform=`translate(${x}px,${y}px)`;
+});
+</script>
+
+</body>
+</html>
